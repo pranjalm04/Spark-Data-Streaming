@@ -53,7 +53,7 @@ def streamData():
     current_time=time.time()
 
     while True:
-        if time.time()>current_time+5000:
+        if time.time()>current_time+300:
             break
         try:
             userData=getData()

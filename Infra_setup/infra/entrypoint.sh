@@ -2,8 +2,8 @@
 set -e
 
 if [ -e "/opt/airflow/requirements.txt" ]; then
-  $(command python) pip install --upgrade pip
-  $(command -v pip) install --user -r requirements.txt
+  python -m pip install --upgrade pip
+  python -m pip install --user -r /opt/airflow/requirements.txt
 fi
 
 if [ ! -f "/opt/airflow/airflow.db" ]; then
@@ -17,6 +17,6 @@ if [ ! -f "/opt/airflow/airflow.db" ]; then
     --password admin
 fi
 
-$(command -v airflow) db upgrade
+airflow db upgrade
 
 exec airflow webserver
