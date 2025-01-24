@@ -31,16 +31,12 @@ RUN curl https://dlcdn.apache.org/spark/spark-3.5.4/spark-3.5.4-bin-hadoop3.tgz 
  && rm -rf spark-3.5.4-bin-hadoop3.tgz
 
 
-COPY jars/spark-cassandra-connector-assembly_2.12-3.5.1.jar "$SPARK_HOME/jars"
-COPY jars/commons-pool2-2.12.0.jar "$SPARK_HOME/jars"
-COPY jars/spark-sql-kafka-0-10_2.12-3.5.4.jar "$SPARK_HOME/jars"
-COPY jars/kafka-clients-3.5.1.jar "$SPARK_HOME/jars"
-COPY jars/spark-token-provider-kafka-0-10_2.12-3.5.4.jar "$SPARK_HOME/jars"
+COPY jars/*.jar "$SPARK_HOME/jars"
 
 FROM spark-base as pyspark
 
 # Install python deps
-COPY ../../requirements.txt .
+COPY requirements.txt .
 RUN pip3 install -r requirements.txt
 
 ENV PATH="/opt/spark/sbin:/opt/spark/bin:${PATH}"
@@ -53,12 +49,14 @@ ENV PYSPARK_PYTHON python3
 COPY ./conf/spark-defaults.conf "$SPARK_HOME/conf"
 COPY ./conf/log4j2.properties "$SPARK_HOME/conf"
 
-
 RUN chmod u+x /opt/spark/sbin/* && \
     chmod u+x /opt/spark/bin/*
 
 ENV PYTHONPATH=$SPARK_HOME/python/:$PYTHONPATH
 
-COPY ../entrypoint.sh .
+COPY entrypoint.sh .
+RUN chmod u+x /opt/spark/entrypoint.sh
 
 ENTRYPOINT ["./entrypoint.sh"]
+
+CMD [ "bash" ]

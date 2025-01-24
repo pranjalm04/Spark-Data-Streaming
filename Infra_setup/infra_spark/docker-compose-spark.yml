@@ -5,7 +5,7 @@ services:
     container_name: spark-master
     build: .
     image: da-spark-image
-    entrypoint: ['./entrypoint.sh', 'master']
+    entrypoint: [ './entrypoint.sh', 'master']
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
       interval: 5s
@@ -14,7 +14,7 @@ services:
     volumes:
       - ../../data:/opt/spark/data
       - ../../StreamInserts:/opt/spark/apps
-      - spark-logs:/opt/spark/spark-events
+#      - spark-logs:/opt/spark/spark-events
     env_file:
       - ./.env.spark
     ports:
@@ -50,7 +50,7 @@ services:
     volumes:
       - ../../data:/opt/spark/data
       - ../../StreamInserts:/opt/spark/apps
-      - spark-logs:/opt/spark/spark-events
+#      - spark-logs:/opt/spark/spark-events
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://spark-master:7077" ]
       interval: 5s
@@ -60,6 +60,6 @@ services:
       - confluent
 networks:
   confluent:
-    external: true
+    external: True
 volumes:
   spark-logs:

@@ -1,10 +1,9 @@
 from logger import logger
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col
+from pyspark.sql.functions import from_json, col, udf
 from pyspark.sql.types import StructType, StructField, StringType
 from CassandraInitialization import CassandraInit
-# https://mvnrepository.com/artifact/org.apache.spark/spark-sql-kafka-0-10
-# 'org.apache.spark:spark-sql-kafka-0-10_2.12:jar:3.5.1'
+import uuid
 
 class SparkStreaming:
     spark=None
@@ -56,16 +55,20 @@ class SparkStreaming:
             StructField("phone", StringType(), False),
             StructField("image", StringType(), False)
         ])
+
         if df is not None:
 
             df = df.selectExpr("CAST(value AS STRING)") \
                 .select(from_json(col('value'), schema).alias('data')).select("data.*")
-            df_console = df.writeStream \
-                .format("console") \
-                .trigger(continuous="1 second") \
-                .start()
-            df_console.awaitTermination()
-        return df
+
+            uuid_udf = udf(lambda: str(uuid.uuid4()))
+
+            df_with_id = df.withColumn("id", uuid_udf())
+
+            df_columns_renamed = df_with_id.withColumnRenamed("zipcode", "post_code") \
+                .withColumnRenamed("registered", "registered_date")\
+                .withColumnRenamed("image","picture")
+        return df_columns_renamed
 
 
 if __name__ == "__main__":
@@ -85,13 +88,13 @@ if __name__ == "__main__":
         df = spark.kafkaDfSchemaConstruct(df)
         logger.info("Streaming is being started...")
         if df is not None:
-            # cassandra_load = df.writeStream.format("org.apache.spark.sql.cassandra") \
-            #     .option('checkpointLocation', '/tmp/checkpoint') \
-            #     .option('keyspace', 'spark_streams') \
-            #     .option('table', 'created_users') \
-            #     .start()
-            df_console=df.writeStream \
-                .format("console") \
-                .trigger(continuous="1 second") \
+            cassandra_load = df.writeStream.format("org.apache.spark.sql.cassandra") \
+                .option('checkpointLocation', '/tmp/checkpoint') \
+                .option('keyspace', 'spark_streams') \
+                .option('table', 'created_users') \
                 .start()
-            df_console.awaitTermination()
+            cassandra_load.awaitTermination()
+            # df_console=df.writeStream \
+            #     .format("console")  \
+            #     .start()
+            # df_console.awaitTermination()
